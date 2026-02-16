@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    ports:
+      - "8080:8080"
+    environment:
+      - QUEUE_THRESHOLD_HIGH=10
+      - QUEUE_THRESHOLD_LOW=2
+      - MIN_WORKERS=1
+      - MAX_WORKERS=4
+
+
+  worker1:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.worker
+    environment:
+      API_URL: http://api:8080
+      WORKER_ENDPOINT: http://worker1:9090
+      EXECUTION_BINARY: /app/runner
+    depends_on:
+      - api
+
+
+  worker2:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.worker
+    environment:
+      API_URL: http://api:8080
+      WORKER_ENDPOINT: http://worker2:9090
+      EXECUTION_BINARY: /app/runner
+    depends_on:
+      - api
+
+
+
+
+
