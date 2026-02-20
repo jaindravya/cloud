@@ -12,7 +12,7 @@ import (
 const labelKey = "cloud"
 const labelVal = "worker"
 
-// docker scaler scales worker containers using the docker API
+// docker scaler scales worker containers using the docker api
 type DockerScaler struct {
 	client *client.Client
 	image  string

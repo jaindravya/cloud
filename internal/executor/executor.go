@@ -11,7 +11,7 @@ import (
 )
 
 
-// runner invokes the C++ execution binary for each job
+// runner invokes the c++ execution binary for each job
 type Runner struct {
     BinaryPath string
     Timeout    time.Duration
@@ -35,8 +35,8 @@ type Result struct {
 }
 
 
-// run executes the job via the C++ binary. arguments are passed as --job-id, --type, --payload.
-// if timeoutSec > 0 it overrides the default runner timeout.
+// run executes the job via the c++ binary. arguments are passed as --job-id, --type, --payload.
+// if timeout_sec > 0 it overrides the default runner timeout.
 func (r *Runner) Run(jobID, jobType, payload string, timeoutSec int) (*Result, error) {
     timeout := r.Timeout
     if timeoutSec > 0 {

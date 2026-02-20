@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    // minimal C++ execution module for CPU-bound jobs
+    // minimal c++ execution module for cpu-bound jobs
     // echo payload and succeed (demo), enables predictable execution times and clean separation from scheduler
     std::cout << "OK:" << payload << std::endl;
     return 0;

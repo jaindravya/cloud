@@ -1,4 +1,4 @@
-# Build C++ runner
+# build c++ runner
 FROM ubuntu:22.04 AS cpp
 RUN apt-get update && apt-get install -y --no-install-recommends cmake g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
@@ -6,7 +6,7 @@ COPY execution/ ./
 RUN cmake -B build . && cmake --build build && cp build/runner /runner
 
 
-# Build Go worker
+# build go worker
 FROM golang:1.21-alpine AS gobuilder
 WORKDIR /app
 COPY go.mod ./
@@ -15,7 +15,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o /worker ./cmd/worker
 
 
-# Final image: Go worker + C++ runner
+# final image: go worker + c++ runner
 FROM alpine:3.19
 RUN apk --no-cache add ca-certificates
 COPY --from=cpp /runner /app/runner

@@ -1,13 +1,10 @@
-# Binaries (Go build output – created when you run go build)
+# binaries
 /api
 /worker
 /runner
-api
-worker
-runner
 *.exe
 
-# CMake / C++ build (execution module – created when you run cmake)
+# CMake / C++ build 
 execution/build/
 execution/out/
 *.o
@@ -15,7 +12,7 @@ execution/out/
 *.so
 *.dylib
 
-# Mac OS (created when you open folders, copy files, or run on Mac)
+# mac os 
 .DS_Store
 ._*
 .AppleDouble
@@ -23,28 +20,28 @@ __MACOSX/
 *.dSYM
 *.dSYM/
 
-# IDE / editor
+# editor
 .idea/
 *.sublime-*
 .vscode/
 
-# Env files with secrets
+# env files with secrets
 .env
 .env.local
 .env.*.local
 
-# Logs and temp
+# logs and temp
 *.log
 /tmp/
 /temp/
 
-# Go test and coverage
+# go test and coverage
 *.test
 coverage.out
 coverage.html
 
-# Editor backup / swap
+# editor backup / swap
 *.swp
 *~
-
+my_mds
 

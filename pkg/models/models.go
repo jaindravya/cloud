@@ -22,6 +22,12 @@ const (
     JobStatusCancelled JobStatus = "cancelled"
 )
 
+// job priority: lower value = higher priority (dispatched first)
+const (
+    PriorityHigh   = 0
+    PriorityNormal = 1
+    PriorityLow    = 2
+)
 
 // job represents a compute workload submitted to the platform
 type Job struct {
@@ -29,6 +35,7 @@ type Job struct {
     Type       string     `json:"type,omitempty"`
     Payload    string     `json:"payload"`
     Status     JobStatus  `json:"status"`
+    Priority   int        `json:"priority,omitempty"` // 0=high, 1=normal, 2=low; default 1
     CreatedAt  time.Time  `json:"created_at"`
     StartedAt  *time.Time `json:"started_at,omitempty"`
     FinishedAt *time.Time `json:"finished_at,omitempty"`
@@ -40,11 +47,12 @@ type Job struct {
 }
 
 
-// submit job request is the body for POST /jobs
+// submit job request is the body for post /jobs
 type SubmitJobRequest struct {
     Type       string `json:"type,omitempty"`
     Payload    string `json:"payload"`
     TimeoutSec int    `json:"timeout_sec,omitempty"`
+    Priority   *int   `json:"priority,omitempty"` // optional; 0=high, 1=normal, 2=low; default 1
 }
 
 

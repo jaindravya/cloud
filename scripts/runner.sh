@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# minimal "runner" for macOS/Linux when C++ binary is not built.
-# worker calls: runner.sh --job-id X --type Y --payload Z
-# we echo OK:<payload> and exit 0 so the job completes successfully.
-# on Mac/Linux: chmod +x scripts/runner.sh then set EXECUTION_BINARY to its path.
+# minimal "runner" for macos/linux when c++ binary is not built.
+# worker calls: runner.sh --job-id x --type y --payload z
+# we echo ok:<payload> and exit 0 so the job completes successfully.
+# on mac/linux: chmod +x scripts/runner.sh then set execution_binary to its path.
 
 
 payload=""

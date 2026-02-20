@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: cloud Job Scheduling API
+  version: 1.0.0
+
+
+
+
+paths:
+  /health:
+    get:
+      summary: liveness probe
+      responses:
+        "200":
+          description: ok
+  /ready:
+    get:
+      summary: readiness probe (200 when workers registered)
+      responses:
+        "200":
+          description: ok
+        "503":
+          description: no workers registered
+  /stats:
+    get:
+      summary: dashboard stats (queue, workers, jobs by status, uptime, success rate)
+      responses:
+        "200":
+          description: json stats
+  /metrics:
+    get:
+      summary: prometheus metrics
+      responses:
+        "200":
+          description: text/plain metrics
+  /jobs:
+    get:
+      summary: list jobs (paginated)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, queued, running, completed, failed, cancelled]
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: list of jobs with total, limit, offset
+    post:
+      summary: submit job (rate limited, idempotent with X-Idempotency-Key)
+      parameters:
+        - name: X-Idempotency-Key
+          in: header
+          schema: { type: string }
+          description: optional, duplicate requests return same job
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string }
+                payload: { type: string }
+                timeout_sec: { type: integer }
+                priority:
+                  type: integer
+                  minimum: 0
+                  maximum: 2
+                  description: "optional; 0=high, 1=normal, 2=low; default 1 (normal). Higher-priority jobs are dispatched first."
+      responses:
+        "200":
+          description: job accepted (or existing job when idempotency key reused)
+        "202":
+          description: job accepted
+        "429":
+          description: rate limit exceeded
+  /jobs/{id}:
+    get:
+      summary: get job status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: job details
+        "404":
+          description: not found
+    delete:
+      summary: cancel job
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: cancelled
+        "404":
+          description: not found
+  /workers:
+    post:
+      summary: register worker
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: { type: string }
+                endpoint: { type: string }
+      responses:
+        "200":
+          description: registered
+  /workers/heartbeat:
+    post:
+      summary: worker heartbeat ping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id: { type: string }
+      responses:
+        "200":
+          description: ok
+        "404":
+          description: worker not found
+
+
+
+
+
+
+
+
+
+
+

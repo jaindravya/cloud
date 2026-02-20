@@ -20,7 +20,7 @@ type Config struct {
 	WorkerImage        string // docker image for worker (e.g. cloud-worker)
 }
 
-// scaler can scale worker containers via docker API
+// scaler can scale worker containers via docker api
 type Scaler interface {
 	StartWorker(ctx context.Context) (containerID string, err error)
 	StopWorker(ctx context.Context, containerID string) error

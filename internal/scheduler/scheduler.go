@@ -15,7 +15,7 @@ import (
 
 const maxDispatchRetries = 3
 
-// scheduler assigns queued jobs to workers via HTTP
+// scheduler assigns queued jobs to workers via http
 type Scheduler struct {
 	queue   *Queue
 	store   *models.JobStore
@@ -73,7 +73,7 @@ func (s *Scheduler) ReapStaleWorkers(threshold time.Duration) {
 				job.StartedAt = nil
 				job.WorkerID = ""
 				s.store.Update(job)
-				s.queue.Enqueue(job.ID)
+               s.queue.Enqueue(job.ID, job.Priority)
 				log.Printf("event=worker_stale job_requeued worker_id=%s job_id=%s heartbeat_age_sec=%.0f", w.ID, job.ID, now.Sub(w.LastHeartbeat).Seconds())
 			}
 		}
@@ -108,7 +108,7 @@ func (s *Scheduler) tick() {
 	list := s.workers.List()
 	worker := loadbalancer.SelectWorker(list, loadbalancer.RoundRobin)
 	if worker == nil {
-		s.queue.Enqueue(jobID)
+       s.queue.Enqueue(jobID, job.Priority)
 		return
 	}
 	now := time.Now()
@@ -151,7 +151,7 @@ func (s *Scheduler) dispatch(job *models.Job, worker *models.Worker) {
 		return
 	}
 	log.Printf("event=job_dispatched job_id=%s worker_id=%s", job.ID, worker.ID)
-	// worker will call back POST /jobs/:id/complete when done
+   // worker will call back post /jobs/:id/complete when done
 }
 
 func (s *Scheduler) handleDispatchFailure(job *models.Job, worker *models.Worker, errMsg string) {
@@ -167,11 +167,12 @@ func (s *Scheduler) handleDispatchFailure(job *models.Job, worker *models.Worker
 			backoffSec = 60
 		}
 		retryNum := job.RetryCount
-		go func(jobID string, delay time.Duration, retryCount int) {
+       jobPriority := job.Priority
+       go func(jobID string, priority int, delay time.Duration, retryCount int) {
 			time.Sleep(delay)
-			s.queue.Enqueue(jobID)
+           s.queue.Enqueue(jobID, priority)
 			log.Printf("event=job_retry_queued job_id=%s retry_count=%d backoff_sec=%.0f error=%s", jobID, retryCount, delay.Seconds(), errMsg)
-		}(job.ID, time.Duration(backoffSec)*time.Second, retryNum)
+       }(job.ID, jobPriority, time.Duration(backoffSec)*time.Second, retryNum)
 		return
 	}
 	job.Status = models.JobStatusFailed
