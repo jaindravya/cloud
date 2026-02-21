@@ -89,6 +89,8 @@ curl -s http://localhost:8080/stats
 ```
 
 
+open http://localhost:8080/dashboard in a browser to see the live dashboard: stats, job list with priority, workers, and a submit form that auto-refreshes every 2 seconds.
+
 ---
 config is via env (e.g. `QUEUE_THRESHOLD_HIGH`, `MIN_WORKERS`, `RATE_LIMIT_JOBS_PER_MIN`).
 

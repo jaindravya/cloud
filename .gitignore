@@ -23,7 +23,6 @@ __MACOSX/
 # editor
 .idea/
 *.sublime-*
-.vscode/
 
 # env files with secrets
 .env

@@ -87,6 +87,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case path == "metrics" && r.Method == http.MethodGet:
 		h.Metrics(w, r)
 		return
+   case path == "dashboard" && r.Method == http.MethodGet:
+       h.Dashboard(w, r)
+       return
+   case path == "workers" && r.Method == http.MethodGet:
+       h.ListWorkers(w, r)
+       return
 	case path == "jobs" && r.Method == http.MethodGet:
 		h.ListJobs(w, r)
 		return
@@ -404,6 +410,18 @@ func respondJSON(w http.ResponseWriter, code int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// dashboard serves the live dashboard html page
+func (h *Handler) Dashboard(w http.ResponseWriter, _ *http.Request) {
+   w.Header().Set("Content-Type", "text/html; charset=utf-8")
+   w.WriteHeader(http.StatusOK)
+   w.Write([]byte(DashboardHTML()))
+}
+
+// list workers handles get /workers (json list of registered workers)
+func (h *Handler) ListWorkers(w http.ResponseWriter, _ *http.Request) {
+   respondJSON(w, http.StatusOK, h.workers.List())
 }
 
 var timeNow = func() time.Time { return time.Now() }
