@@ -125,15 +125,22 @@ td.clickable:hover{color:#58a6ff}
 
 <script>
 var priorityLabel={0:'<span class="badge badge-high">high</span>',1:'<span class="badge badge-normal">normal</span>',2:'<span class="badge badge-low">low</span>'};
-var typeHints={'':'plain text payload, echoed back as result','hash':'json: {"input":"text to hash"} returns sha-256 hex digest','prime':'json: {"n":1000000} counts primes up to n (max 100m)','fetch':'json: {"url":"https://example.com"} fetches url (no localhost)','sleep':'json: {"seconds":5} sleeps for n seconds (max 300)'};
-var typePlaceholders={'':'hello world','hash':'{"input":"hello world"}','prime':'{"n":1000000}','fetch':'{"url":"https://httpbin.org/get"}','sleep':'{"seconds":5}'};
+var typeHints={'':'plain text payload, echoed back as result','hash':'fill in the text to hash between the quotes. returns sha-256 hex digest.','prime':'insert number after "n": (max 100,000,000). counts all primes up to that number.','fetch':'fill in a url between the quotes. fetches it and returns status + body. no localhost allowed.','sleep':'fill in seconds after "seconds": (max 300). simulates a long-running job.'};
+var typeTemplates={'':'','hash':'{"input":""}','prime':'{"n":}','fetch':'{"url":""}','sleep':'{"seconds":}'};
 var allJobs=[];
 function showDetail(idx,field){
   var j=allJobs[idx];if(!j)return;
   var val=field==='payload'?j.payload:(j.result||j.error||'-');
   showModal(field,val);
 }
-function updateHint(){var t=document.getElementById('f-type').value;document.getElementById('f-hint').textContent=typeHints[t]||typeHints[''];document.getElementById('f-payload').placeholder=typePlaceholders[t]||typePlaceholders[''];}
+function updateHint(){
+  var t=document.getElementById('f-type').value;
+  var inp=document.getElementById('f-payload');
+  document.getElementById('f-hint').textContent=typeHints[t]||typeHints[''];
+  inp.placeholder=t?'fill in the value above':'hello world';
+  var tmpl=typeTemplates[t]||'';
+  if(tmpl){inp.value=tmpl;inp.focus();}else{inp.value='';}
+}
 function typeLabel(t){if(!t)return'<span class="badge badge-normal">echo</span>';return'<span class="badge badge-type">'+esc(t)+'</span>';}
 function statusClass(s){return 'status-'+(s||'pending')}
 function workerClass(s){return 'worker-'+(s||'idle')}
@@ -171,7 +178,7 @@ async function fetchJobs(){
     const tbody=document.getElementById('job-rows');
     if(!jobs.length){tbody.innerHTML='<tr><td colspan="7" class="empty">no jobs yet</td></tr>';return;}
     jobs.sort(function(a,b){return (a.priority-b.priority)||new Date(b.created_at)-new Date(a.created_at);});
-    tbody.innerHTML=allJobs=jobs;jobs.map(function(j,i){return '<tr>'+
+    allJobs=jobs;tbody.innerHTML=jobs.map(function(j,i){return '<tr>'+
       '<td title="'+j.id+'">'+j.id.slice(0,10)+'</td>'+
       '<td>'+typeLabel(j.type)+'</td>'+
       '<td class="clickable" onclick="showDetail('+i+',\'payload\')">'+esc(trunc(j.payload,40))+'</td>'+
