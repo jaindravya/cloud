@@ -66,18 +66,32 @@ go build -o runner ./cmd/runner
 ```
 
 
-**terminal 2: worker**
+**terminal 2+: workers**
 
+each worker needs its own port. open a new terminal for each one and set `WORKER_PORT` + `WORKER_ENDPOINT` to a unique port:
 
 ```bash
 export API_URL="http://localhost:8080"
+export WORKER_PORT=9090
 export WORKER_ENDPOINT="http://localhost:9090"
 export EXECUTION_BINARY="./runner"
 ./cloud-worker
 ```
 
+to add more workers, open another terminal and increment the port:
 
-**terminal 3: try it**
+```bash
+export API_URL="http://localhost:8080"
+export WORKER_PORT=9091
+export WORKER_ENDPOINT="http://localhost:9091"
+export EXECUTION_BINARY="./runner"
+./cloud-worker
+```
+
+you can run as many as you want (9092, 9093, ...). each one registers with the api and picks up jobs in parallel.
+
+
+**next terminal: try it**
 
 
 ```bash
@@ -145,4 +159,4 @@ docker compose -f deploy/docker-compose.yaml down
 
 ---
 
-config is via env (e.g. `QUEUE_THRESHOLD_HIGH`, `MIN_WORKERS`, `RATE_LIMIT_JOBS_PER_MIN`). see `deploy/docker-compose.yaml` for the full list.
+api config is via env (e.g. `QUEUE_THRESHOLD_HIGH`, `MIN_WORKERS`, `RATE_LIMIT_JOBS_PER_MIN`). worker config: `WORKER_PORT` (default 9090), `WORKER_ENDPOINT`, `EXECUTION_BINARY`. see `deploy/docker-compose.yaml` for the full list.

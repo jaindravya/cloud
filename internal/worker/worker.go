@@ -61,9 +61,10 @@ func (w *Worker) Start() error {
 		return err
 	}
 	go w.heartbeatLoop()
-	w.server.Addr = ":9090"
+      port := getEnv("WORKER_PORT", "9090")
+      w.server.Addr = ":" + port
 	go func() {
-		log.Println("worker listening on :9090")
+             log.Println("worker listening on :" + port)
 		_ = w.server.ListenAndServe()
 	}()
 	return nil
