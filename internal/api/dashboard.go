@@ -50,6 +50,16 @@ tr:hover{background:#1c2129}
 .worker-idle{color:#3fb950}
 .worker-busy{color:#d29922}
 .empty{padding:32px;text-align:center;color:#484f58}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:100;justify-content:center;align-items:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:24px;max-width:700px;width:90%;max-height:80vh;overflow:auto;position:relative}
+.modal-box h3{font-size:14px;color:#8b949e;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.modal-box pre{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:16px;color:#e6edf3;font-size:13px;white-space:pre-wrap;word-break:break-all;max-height:60vh;overflow:auto}
+.modal-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer}
+.modal-close:hover{color:#e6edf3}
+td.clickable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+td.clickable:hover{color:#58a6ff}
 </style>
 </head>
 <body>
@@ -104,10 +114,25 @@ tr:hover{background:#1c2129}
 </div>
 </div>
 
+
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+<div class="modal-box">
+<button class="modal-close" onclick="closeModal()">&times;</button>
+<h3 id="modal-title">details</h3>
+<pre id="modal-content"></pre>
+</div>
+</div>
+
 <script>
 var priorityLabel={0:'<span class="badge badge-high">high</span>',1:'<span class="badge badge-normal">normal</span>',2:'<span class="badge badge-low">low</span>'};
 var typeHints={'':'plain text payload, echoed back as result','hash':'json: {"input":"text to hash"} returns sha-256 hex digest','prime':'json: {"n":1000000} counts primes up to n (max 100m)','fetch':'json: {"url":"https://example.com"} fetches url (no localhost)','sleep':'json: {"seconds":5} sleeps for n seconds (max 300)'};
 var typePlaceholders={'':'hello world','hash':'{"input":"hello world"}','prime':'{"n":1000000}','fetch':'{"url":"https://httpbin.org/get"}','sleep':'{"seconds":5}'};
+var allJobs=[];
+function showDetail(idx,field){
+  var j=allJobs[idx];if(!j)return;
+  var val=field==='payload'?j.payload:(j.result||j.error||'-');
+  showModal(field,val);
+}
 function updateHint(){var t=document.getElementById('f-type').value;document.getElementById('f-hint').textContent=typeHints[t]||typeHints[''];document.getElementById('f-payload').placeholder=typePlaceholders[t]||typePlaceholders[''];}
 function typeLabel(t){if(!t)return'<span class="badge badge-normal">echo</span>';return'<span class="badge badge-type">'+esc(t)+'</span>';}
 function statusClass(s){return 'status-'+(s||'pending')}
@@ -146,13 +171,13 @@ async function fetchJobs(){
     const tbody=document.getElementById('job-rows');
     if(!jobs.length){tbody.innerHTML='<tr><td colspan="7" class="empty">no jobs yet</td></tr>';return;}
     jobs.sort(function(a,b){return (a.priority-b.priority)||new Date(b.created_at)-new Date(a.created_at);});
-    tbody.innerHTML=jobs.map(function(j){return '<tr>'+
+    tbody.innerHTML=allJobs=jobs;jobs.map(function(j,i){return '<tr>'+
       '<td title="'+j.id+'">'+j.id.slice(0,10)+'</td>'+
       '<td>'+typeLabel(j.type)+'</td>'+
-      '<td title="'+esc(j.payload)+'">'+esc(trunc(j.payload,40))+'</td>'+
+      '<td class="clickable" onclick="showDetail('+i+',\'payload\')">'+esc(trunc(j.payload,40))+'</td>'+
       '<td>'+(priorityLabel[j.priority]||priorityLabel[1])+'</td>'+
       '<td class="'+statusClass(j.status)+'">'+j.status+'</td>'+
-      '<td title="'+(esc(j.result||j.error||''))+'">'+esc(trunc(j.result||j.error||'-',50))+'</td>'+
+      '<td class="clickable" onclick="showDetail('+i+',\'result\')">'+esc(trunc(j.result||j.error||'-',50))+'</td>'+
       '<td>'+ago(j.created_at)+'</td>'+
     '</tr>';}).join('');
   }catch(e){}
@@ -175,6 +200,16 @@ async function fetchWorkers(){
 }
 
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showModal(title,text){
+  document.getElementById('modal-title').textContent=title;
+  var el=document.getElementById('modal-content');
+  try{var parsed=JSON.parse(text);el.textContent=JSON.stringify(parsed,null,2);}catch(e){el.textContent=text;}
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('active');
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('modal').classList.remove('active');});
 
 async function submitJob(){
   var payload=document.getElementById('f-payload').value.trim();
