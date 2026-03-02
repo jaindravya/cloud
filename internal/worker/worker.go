@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+    "math/rand"
 	"net/http"
 	"os"
 	"sync"
@@ -41,7 +42,7 @@ func randomID() string {
 	const chars = "abcdef0123456789"
 	b := make([]byte, 8)
 	for i := range b {
-		b[i] = chars[i%len(chars)]
+         b[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(b)
 }

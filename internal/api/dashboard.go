@@ -1,6 +1,6 @@
 package api
 
-// DashboardHTML returns the full HTML page for the live dashboard
+// DashboardHTML returns the full html page for the live dashboard
 func DashboardHTML() string {
    return `<!DOCTYPE html>
 <html lang="en">
@@ -20,7 +20,9 @@ header span{font-size:12px;color:#8b949e}
 .stat-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;text-align:center}
 .stat-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;margin-bottom:6px}
 .stat-card .value{font-size:28px;font-weight:700;color:#e6edf3}
-.submit-bar{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.submit-bar{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;margin-bottom:24px}
+.submit-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.submit-hint{font-size:11px;color:#484f58;margin-top:8px}
 .submit-bar input[type=text]{flex:1;min-width:200px;padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:14px;outline:none}
 .submit-bar input[type=text]:focus{border-color:#58a6ff}
 .submit-bar select{padding:8px 12px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:14px;outline:none;cursor:pointer}
@@ -39,6 +41,7 @@ tr:hover{background:#1c2129}
 .badge-high{background:#da363340;color:#f85149}
 .badge-normal{background:#30363d;color:#8b949e}
 .badge-low{background:#1f6feb30;color:#58a6ff}
+.badge-type{background:#23893640;color:#3fb950}
 .status-completed{color:#3fb950}
 .status-running,.status-queued{color:#d29922}
 .status-failed{color:#f85149}
@@ -65,6 +68,14 @@ tr:hover{background:#1c2129}
 </div>
 
 <div class="submit-bar">
+<div class="submit-row">
+<select id="f-type" onchange="updateHint()">
+<option value="">echo (default)</option>
+<option value="hash">hash (sha-256)</option>
+<option value="prime">prime (count primes)</option>
+<option value="fetch">fetch (http get)</option>
+<option value="sleep">sleep (wait n seconds)</option>
+</select>
 <input type="text" id="f-payload" placeholder="payload (e.g. hello world)">
 <select id="f-priority">
 <option value="0">high priority</option>
@@ -74,12 +85,14 @@ tr:hover{background:#1c2129}
 <button onclick="submitJob()">submit job</button>
 <span id="f-msg" style="font-size:12px;color:#3fb950"></span>
 </div>
+<div class="submit-hint" id="f-hint">plain text payload, echoed back as result</div>
+</div>
 
 <div class="tables">
 <div class="panel">
 <h2>jobs <span class="count" id="job-count">0</span></h2>
 <div id="job-table-wrap">
-<table><thead><tr><th>id</th><th>payload</th><th>priority</th><th>status</th><th>result</th><th>created</th></tr></thead><tbody id="job-rows"></tbody></table>
+<table><thead><tr><th>id</th><th>type</th><th>payload</th><th>priority</th><th>status</th><th>result</th><th>created</th></tr></thead><tbody id="job-rows"></tbody></table>
 </div>
 </div>
 <div class="panel">
@@ -92,13 +105,16 @@ tr:hover{background:#1c2129}
 </div>
 
 <script>
-const priorityLabel={0:'<span class="badge badge-high">high</span>',1:'<span class="badge badge-normal">normal</span>',2:'<span class="badge badge-low">low</span>'};
-
+var priorityLabel={0:'<span class="badge badge-high">high</span>',1:'<span class="badge badge-normal">normal</span>',2:'<span class="badge badge-low">low</span>'};
+var typeHints={'':'plain text payload, echoed back as result','hash':'json: {"input":"text to hash"} returns sha-256 hex digest','prime':'json: {"n":1000000} counts primes up to n (max 100m)','fetch':'json: {"url":"https://example.com"} fetches url (no localhost)','sleep':'json: {"seconds":5} sleeps for n seconds (max 300)'};
+var typePlaceholders={'':'hello world','hash':'{"input":"hello world"}','prime':'{"n":1000000}','fetch':'{"url":"https://httpbin.org/get"}','sleep':'{"seconds":5}'};
+function updateHint(){var t=document.getElementById('f-type').value;document.getElementById('f-hint').textContent=typeHints[t]||typeHints[''];document.getElementById('f-payload').placeholder=typePlaceholders[t]||typePlaceholders[''];}
+function typeLabel(t){if(!t)return'<span class="badge badge-normal">echo</span>';return'<span class="badge badge-type">'+esc(t)+'</span>';}
 function statusClass(s){return 'status-'+(s||'pending')}
 function workerClass(s){return 'worker-'+(s||'idle')}
 function ago(ts){
   if(!ts)return'-';
-  const d=new Date(ts),now=new Date(),sec=Math.floor((now-d)/1000);
+  var d=new Date(ts),now=new Date(),sec=Math.floor((now-d)/1000);
   if(sec<60)return sec+'s ago';
   if(sec<3600)return Math.floor(sec/60)+'m ago';
   return Math.floor(sec/3600)+'h ago';
@@ -106,9 +122,10 @@ function ago(ts){
 function fmtUptime(sec){
   if(sec<60)return Math.floor(sec)+'s';
   if(sec<3600)return Math.floor(sec/60)+'m';
-  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
+  var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
   return h+'h '+m+'m';
 }
+function trunc(s,n){if(!s||s.length<=n)return s;return s.slice(0,n)+'...';}
 
 async function fetchStats(){
   try{
@@ -127,16 +144,17 @@ async function fetchJobs(){
     const jobs=d.jobs||[];
     document.getElementById('job-count').textContent=d.total||0;
     const tbody=document.getElementById('job-rows');
-    if(!jobs.length){tbody.innerHTML='<tr><td colspan="6" class="empty">no jobs yet</td></tr>';return;}
-    jobs.sort((a,b)=>(a.priority-b.priority)||new Date(b.created_at)-new Date(a.created_at));
-    tbody.innerHTML=jobs.map(j=>'<tr>'+
+    if(!jobs.length){tbody.innerHTML='<tr><td colspan="7" class="empty">no jobs yet</td></tr>';return;}
+    jobs.sort(function(a,b){return (a.priority-b.priority)||new Date(b.created_at)-new Date(a.created_at);});
+    tbody.innerHTML=jobs.map(function(j){return '<tr>'+
       '<td title="'+j.id+'">'+j.id.slice(0,10)+'</td>'+
-      '<td title="'+esc(j.payload)+'">'+esc(j.payload)+'</td>'+
+      '<td>'+typeLabel(j.type)+'</td>'+
+      '<td title="'+esc(j.payload)+'">'+esc(trunc(j.payload,40))+'</td>'+
       '<td>'+(priorityLabel[j.priority]||priorityLabel[1])+'</td>'+
       '<td class="'+statusClass(j.status)+'">'+j.status+'</td>'+
-      '<td title="'+(esc(j.result||j.error||''))+'">'+esc(j.result||j.error||'-')+'</td>'+
+      '<td title="'+(esc(j.result||j.error||''))+'">'+esc(trunc(j.result||j.error||'-',50))+'</td>'+
       '<td>'+ago(j.created_at)+'</td>'+
-    '</tr>').join('');
+    '</tr>';}).join('');
   }catch(e){}
 }
 
@@ -159,15 +177,19 @@ async function fetchWorkers(){
 function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 async function submitJob(){
-  const payload=document.getElementById('f-payload').value.trim();
+  var payload=document.getElementById('f-payload').value.trim();
   if(!payload)return;
-  const priority=parseInt(document.getElementById('f-priority').value);
+  var priority=parseInt(document.getElementById('f-priority').value);
+  var type=document.getElementById('f-type').value;
+  var body={payload:payload,priority:priority};
+  if(type)body.type=type;
   try{
-    const r=await fetch('/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload,priority})});
-    const d=await r.json();
+    var r=await fetch('/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    var d=await r.json();
     document.getElementById('f-msg').textContent='submitted: '+d.id;
+    document.getElementById('f-msg').style.color='#3fb950';
     document.getElementById('f-payload').value='';
-    setTimeout(()=>{document.getElementById('f-msg').textContent='';},3000);
+    setTimeout(function(){document.getElementById('f-msg').textContent='';},3000);
     refresh();
   }catch(e){document.getElementById('f-msg').textContent='error';document.getElementById('f-msg').style.color='#f85149';}
 }
