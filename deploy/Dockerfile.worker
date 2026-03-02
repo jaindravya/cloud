@@ -1,25 +1,27 @@
 # build c++ runner
 FROM ubuntu:22.04 AS cpp
-RUN apt-get update && apt-get install -y --no-install-recommends cmake g++ && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends cmake g++ make && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 COPY execution/ ./
 RUN cmake -B build . && cmake --build build && cp build/runner /runner
 
 
-# build go worker
-FROM golang:1.21-alpine AS gobuilder
+# build go worker and go runner
+FROM golang:1.24-alpine AS gobuilder
 WORKDIR /app
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -o /worker ./cmd/worker
+RUN CGO_ENABLED=0 go build -o /runner-go ./cmd/runner
 
 
-# final image: go worker + c++ runner
+# final image: go worker + go runner (all 4 types) + c++ runner (fallback)
 FROM alpine:3.19
 RUN apk --no-cache add ca-certificates
-COPY --from=cpp /runner /app/runner
+COPY --from=cpp /runner /app/runner-cpp
 COPY --from=gobuilder /worker /app/worker
+COPY --from=gobuilder /runner-go /app/runner
 EXPOSE 9090
 WORKDIR /app
 CMD ["/app/worker"]

@@ -64,14 +64,19 @@ paths:
             schema:
               type: object
               properties:
-                type: { type: string }
-                payload: { type: string }
+                type:
+                  type: string
+                  description: "optional job type. supported: hash, prime, fetch, sleep. omit or empty for echo (backwards compatible)."
+                  enum: [hash, prime, fetch, sleep]
+                payload:
+                  type: string
+                  description: "job payload. for typed jobs this is a json string (e.g. {\"input\":\"hello\"} for hash). for echo jobs this is plain text."
                 timeout_sec: { type: integer }
                 priority:
                   type: integer
                   minimum: 0
                   maximum: 2
-                  description: "optional; 0=high, 1=normal, 2=low; default 1 (normal). Higher-priority jobs are dispatched first."
+                  description: "optional; 0=high, 1=normal, 2=low; default 1 (normal). higher-priority jobs are dispatched first."
       responses:
         "200":
           description: job accepted (or existing job when idempotency key reused)
