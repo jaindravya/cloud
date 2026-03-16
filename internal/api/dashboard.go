@@ -33,7 +33,8 @@ header span{font-size:12px;color:#8b949e}
 .panel{background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden}
 .panel h2{font-size:14px;font-weight:600;color:#e6edf3;padding:12px 16px;border-bottom:1px solid #30363d;display:flex;justify-content:space-between;align-items:center}
 .panel h2 .count{background:#30363d;color:#8b949e;font-size:11px;padding:2px 8px;border-radius:10px}
-table{width:100%;border-collapse:collapse}
+#job-table-wrap{overflow-x:auto}
+table{width:100%;min-width:800px;border-collapse:collapse}
 th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8b949e;padding:8px 16px;border-bottom:1px solid #30363d}
 td{padding:8px 16px;border-bottom:1px solid #21262d;font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 tr:hover{background:#1c2129}
@@ -85,6 +86,9 @@ td.clickable:hover{color:#58a6ff}
 <option value="prime">prime (count primes)</option>
 <option value="fetch">fetch (http get)</option>
 <option value="sleep">sleep (wait n seconds)</option>
+<option value="image-resize">image-resize</option>
+<option value="compress">compress (zip/tar.gz)</option>
+<option value="email">email (smtp)</option>
 </select>
 <input type="text" id="f-payload" placeholder="payload (e.g. hello world)">
 <select id="f-priority">
@@ -125,8 +129,8 @@ td.clickable:hover{color:#58a6ff}
 
 <script>
 var priorityLabel={0:'<span class="badge badge-high">high</span>',1:'<span class="badge badge-normal">normal</span>',2:'<span class="badge badge-low">low</span>'};
-var typeHints={'':'plain text payload, echoed back as result','hash':'fill in the text to hash between the quotes. returns sha-256 hex digest.','prime':'insert number after "n": (max 100,000,000). counts all primes up to that number.','fetch':'fill in a url between the quotes. fetches it and returns status + body. no localhost allowed.','sleep':'fill in seconds after "seconds": (max 300). simulates a long-running job.'};
-var typeTemplates={'':'','hash':'{"input":""}','prime':'{"n":}','fetch':'{"url":""}','sleep':'{"seconds":}'};
+var typeHints={'':'plain text payload, echoed back as result','hash':'fill in the text to hash between the quotes. returns sha-256 hex digest.','prime':'insert number after "n": (max 100,000,000). counts all primes up to that number.','fetch':'fill in a url between the quotes. fetches it and returns status + body. no localhost allowed.','sleep':'fill in seconds after "seconds": (max 300). simulates a long-running job.','image-resize':'fill in paths relative to runner data root (default ./data) and target size. example input_path: "images/in.png".','compress':'fill in input_paths + output_path under data root. format supports "zip" or "tar.gz".','email':'to, subject, and at least one of text or html. worker must have SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_MODE set.'};
+var typeTemplates={'':'','hash':'{"input":""}','prime':'{"n":}','fetch':'{"url":""}','sleep':'{"seconds":}','image-resize':'{"input_path":"images/in.png","output_path":"images/out.png","width":320,"height":200}','compress':'{"input_paths":["reports/a.txt","reports/b.txt"],"output_path":"archives/reports.zip","format":"zip"}','email':'{"to":"recipient@example.com","subject":"Subject","text":"Plain text body","html":""}'};
 var allJobs=[];
 function showDetail(idx,field){
   var j=allJobs[idx];if(!j)return;

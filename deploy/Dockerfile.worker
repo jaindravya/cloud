@@ -16,12 +16,16 @@ RUN CGO_ENABLED=0 go build -o /worker ./cmd/worker
 RUN CGO_ENABLED=0 go build -o /runner-go ./cmd/runner
 
 
-# final image: go worker + go runner (all 4 types) + c++ runner (fallback)
+# final image: go worker + go runner + c++ runner fallback
+# TLS: ca-certificates below enables HTTPS and SMTP TLS/STARTTLS.
+# For email jobs, pass SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_MODE (starttls|smtps), optional SMTP_TIMEOUT_SEC (e.g. in compose or at runtime).
 FROM alpine:3.19
 RUN apk --no-cache add ca-certificates
 COPY --from=cpp /runner /app/runner-cpp
 COPY --from=gobuilder /worker /app/worker
 COPY --from=gobuilder /runner-go /app/runner
+ENV RUNNER_DATA_ROOT=/app/data
+RUN mkdir -p /app/data
 EXPOSE 9090
 WORKDIR /app
 CMD ["/app/worker"]

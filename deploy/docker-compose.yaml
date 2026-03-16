@@ -20,6 +20,13 @@ services:
       API_URL: http://api:8080
       WORKER_ENDPOINT: http://worker1:9090
       EXECUTION_BINARY: /app/runner
+      # Optional: for email jobs, set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_MODE (starttls|smtps), optional SMTP_TIMEOUT_SEC
+      # - SMTP_HOST=smtp.example.com
+      # - SMTP_PORT=587
+      # - SMTP_USER=user
+      # - SMTP_PASS=secret
+      # - SMTP_FROM=noreply@example.com
+      # - SMTP_MODE=starttls
     depends_on:
       - api
 
@@ -32,6 +39,7 @@ services:
       API_URL: http://api:8080
       WORKER_ENDPOINT: http://worker2:9090
       EXECUTION_BINARY: /app/runner
+      # Optional: same SMTP env vars as worker1 if running email jobs
     depends_on:
       - api
 

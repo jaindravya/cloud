@@ -66,11 +66,11 @@ paths:
               properties:
                 type:
                   type: string
-                  description: "optional job type. supported: hash, prime, fetch, sleep. omit or empty for echo (backwards compatible)."
-                  enum: [hash, prime, fetch, sleep]
+                  description: "optional job type. supported: hash, prime, fetch, sleep, image-resize, compress, email. omit or empty for echo (backwards compatible)."
+                  enum: [hash, prime, fetch, sleep, image-resize, compress, email]
                 payload:
                   type: string
-                  description: "job payload. for typed jobs this is a json string (e.g. {\"input\":\"hello\"} for hash). for echo jobs this is plain text."
+                  description: "job payload. for typed jobs this is a json string (e.g. {\"input\":\"hello\"} for hash, {\"input_path\":\"images/in.png\",\"output_path\":\"images/out.png\",\"width\":320,\"height\":200} for image-resize, {\"input_paths\":[\"reports/a.txt\"],\"output_path\":\"archives/reports.zip\",\"format\":\"zip\"} for compress, {\"to\":\"user@example.com\",\"subject\":\"Subject\",\"text\":\"Body\"} for email). for echo jobs this is plain text."
                 timeout_sec: { type: integer }
                 priority:
                   type: integer

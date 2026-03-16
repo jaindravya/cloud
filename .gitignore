@@ -43,4 +43,6 @@ coverage.html
 *.swp
 *~
 my_mds
-
+cloud-api
+cloud-worker
+runner
